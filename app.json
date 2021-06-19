@@ -31,6 +31,25 @@
     "blocked": {
       "description": "A JSON encoded list of user IDs to block",
       "value": "[]"
+    },
+    "db_db": {
+      "description": "The name of the postgres servers database"
+    },
+    "db_host": {
+      "description": "The host of the postgres DB"
+    },
+    "db_port": {
+      "description": "The port to use for the DB",
+      "value": "5432"
+    },
+    "db_pw": {
+      "description": "The password used to access the DB"
+    },
+    "db_user": {
+      "description": "The username to use"
     }
-  }
+  },
+  "addons": [{
+    "plan": "heroku-postgresql"
+  }]
 }
