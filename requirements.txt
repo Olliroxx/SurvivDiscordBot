@@ -1,2 +1,3 @@
 discord.py ~= 1.7
 requests ~= 2.25
+psycopg2 ~= 2.9  # For heroku deployments

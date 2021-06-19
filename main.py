@@ -30,8 +30,6 @@ FOOTER_TEXT = "DM the bot and your feedback will be passed on the maintainer"
 last_update_time = time()
 update_interval = 60
 server_status = {}
-
-
 # ud: unplanned down
 # pd: planned down
 # d: down
