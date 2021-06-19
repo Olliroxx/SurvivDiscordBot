@@ -136,8 +136,8 @@ def update_server_status():
         main_logger.info("Surviv frontend up")
 
     try:
-        get("https://surviv.io/api/games_modes", timeout=10)
-        main_logger.debug("Got gamemodes response " + str(resp) + " " + resp.text)
+        get("https://surviv.io/api/site_info?language=en", timeout=10)
+        main_logger.debug("Got site info response " + str(resp) + " " + resp.text)
     except exceptions.ConnectionError:
         server_status["API"] = "d"
         main_logger.info("Surviv api down")
