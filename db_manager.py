@@ -6,6 +6,7 @@ import psycopg2
 
 conn = None
 cursor = None
+is_postgres = False
 if "discord_token" in environ:
     from psycopg2 import connect
     conn = psycopg2.connect(
@@ -16,6 +17,7 @@ if "discord_token" in environ:
         port=environ["db_port"]
     )
     cursor = conn.cursor()
+    is_postgres = True
 else:
     from sqlite3 import connect
 
@@ -29,12 +31,18 @@ else:
 
 
 def setup():
-    cursor.execute("""
+    if is_postgres:
+        cursor.execute("""
+CREATE TABLE IF NOT EXISTS servers (
+    server_id INTEGER PRIMARY KEY,
+    config
+)""")
+    else:
+        cursor.execute("""
 CREATE TABLE IF NOT EXISTS servers(
     server_id int PRIMARY KEY,
-    config str
-);
-    """)
+    config TEXT
+);""")
     conn.commit()
     logging.info("Set up DB")
 
