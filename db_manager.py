@@ -63,31 +63,31 @@ def new_server(server_id):
         "server_status_channel": 0
     }
     config_str = dumps(config)
-    cursor.execute("INSERT INTO servers VALUES (?, ?)", (server_id, config_str))
+    cursor.execute("INSERT INTO servers VALUES (?, ?);", (server_id, config_str))
     conn.commit()
     logger.info("Server with id " + str(server_id) + " created")
 
 
 def get_server(server_id):
-    cursor.execute("SELECT * FROM servers WHERE server_id = ?", [server_id])
+    cursor.execute("SELECT * FROM servers WHERE server_id = ?;", [server_id])
     return loads(cursor.fetchone()[1])
 
 
 def update_server(server_id, config):
     logger.info("Server with id " + str(server_id) + " reconfigured")
     config_str = dumps(config)
-    cursor.execute("UPDATE servers SET config = ? WHERE server_id = ?", (config_str, server_id))
+    cursor.execute("UPDATE servers SET config = ? WHERE server_id = ?;", (config_str, server_id))
     conn.commit()
 
 
 def del_server(server_id):
     logger.info("Server with id " + str(server_id) + " deleted")
-    cursor.execute("DELETE FROM servers WHERE server_id = ?", [server_id])
+    cursor.execute("DELETE FROM servers WHERE server_id = ?;", [server_id])
     conn.commit()
 
 
 def add_if_not_exists(server_id):
-    cursor.execute("SELECT * FROM servers WHERE server_id = ?", [server_id])
+    cursor.execute("SELECT * FROM servers WHERE server_id = ?;", [server_id])
     if not cursor.fetchone():
         new_server(server_id)
 
