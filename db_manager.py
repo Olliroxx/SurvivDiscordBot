@@ -24,10 +24,19 @@ else:
     conn = connect("./data/servers.sql")
     cursor = conn.cursor()
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 if "discord_token" in environ:
-    logging.basicConfig(format="db_manager - %(message)s", level=logging.INFO)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("db_manager - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 else:
-    logging.basicConfig(filename="./data/logs/db.log", filemode="w", format="%(asctime)s - %(message)s", level=logging.INFO)
+    handler = logging.FileHandler(filename="./data/logs/db.log", encoding="utf-8")
+    formatter = logging.Formatter("%(asctime)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+logger.info("Starting")
 
 
 def setup():
@@ -44,7 +53,7 @@ CREATE TABLE IF NOT EXISTS servers(
     config str
 );""")
     conn.commit()
-    logging.info("Set up DB")
+    logger.info("Set up DB")
 
 
 def new_server(server_id):
@@ -56,7 +65,7 @@ def new_server(server_id):
     config_str = dumps(config)
     cursor.execute("INSERT INTO servers VALUES (?, ?)", (server_id, config_str))
     conn.commit()
-    logging.info("Server with id " + str(server_id) + " created")
+    logger.info("Server with id " + str(server_id) + " created")
 
 
 def get_server(server_id):
@@ -65,14 +74,14 @@ def get_server(server_id):
 
 
 def update_server(server_id, config):
-    logging.info("Server with id " + str(server_id) + " reconfigured")
+    logger.info("Server with id " + str(server_id) + " reconfigured")
     config_str = dumps(config)
     cursor.execute("UPDATE servers SET config = ? WHERE server_id = ?", (config_str, server_id))
     conn.commit()
 
 
 def del_server(server_id):
-    logging.info("Server with id " + str(server_id) + " deleted")
+    logger.info("Server with id " + str(server_id) + " deleted")
     cursor.execute("DELETE FROM servers WHERE server_id = ?", [server_id])
     conn.commit()
 
