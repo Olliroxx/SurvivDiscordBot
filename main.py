@@ -7,7 +7,6 @@ import db_manager
 
 main_logger = logging.getLogger(__name__)
 discord_logger = logging.getLogger("discord")
-discord_logger.setLevel(logging.INFO)
 
 if "discord_token" in environ:
     main_handler = logging.StreamHandler()
@@ -16,24 +15,33 @@ if "discord_token" in environ:
     # Discord py handler
     formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
     main_handler.setFormatter(formatter)
+
     main_logger.addHandler(main_handler)
+    main_logger.setLevel(logging.DEBUG)
+
     discord_logger.addHandler(main_handler)
+    discord_logger.setLevel(logging.INFO)
 
 else:
-    dbg_handler = logging.FileHandler(filename="./data/logs/main_dbg.log", encoding="utf-8", mode="a")
-    main_handler = logging.FileHandler(filename="./data/logs/main.log", encoding="utf-8", mode="a")
-    dbg_handler.setLevel(logging.DEBUG)
-    main_handler.setLevel(logging.INFO)
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+    dbg_handler = logging.FileHandler(filename="./data/logs/main_dbg.log", encoding="utf-8", mode="a")
+    dbg_handler.setLevel(logging.DEBUG)
     dbg_handler.setFormatter(formatter)
+
+    main_handler = logging.FileHandler(filename="./data/logs/main.log", encoding="utf-8", mode="a")
+    main_handler.setLevel(logging.INFO)
     main_handler.setFormatter(formatter)
+
     main_logger.addHandler(dbg_handler)
     main_logger.addHandler(main_handler)
+    main_logger.setLevel(logging.INFO)
 
     # Discord py handler
     handler = logging.FileHandler(filename="./data/logs/discord.log", encoding="utf-8", mode="a")
     handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     discord_logger.addHandler(handler)
+    discord_logger.setLevel(logging.INFO)
 
 MARKET_ITEMS_PER_PAGE = 10
 FOOTER_TEXT = "DM the bot and your feedback will be passed on the maintainer"
