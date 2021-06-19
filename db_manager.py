@@ -39,6 +39,13 @@ else:
 logger.info("Starting")
 
 
+def exec_query(query, values):
+    if is_postgres:
+        cursor.execute(query.replace("?", "%s"), values)
+    else:
+        cursor.execute(query, values)
+
+
 def setup():
     if is_postgres:
         cursor.execute("""
@@ -63,31 +70,31 @@ def new_server(server_id):
         "server_status_channel": 0
     }
     config_str = dumps(config)
-    cursor.execute("INSERT INTO servers VALUES (?, ?);", (server_id, config_str))
+    exec_query("INSERT INTO servers VALUES (?, ?);", (server_id, config_str))
     conn.commit()
     logger.info("Server with id " + str(server_id) + " created")
 
 
 def get_server(server_id):
-    cursor.execute("SELECT * FROM servers WHERE server_id = ?;", [server_id])
+    exec_query("SELECT * FROM servers WHERE server_id = ?;", [server_id])
     return loads(cursor.fetchone()[1])
 
 
 def update_server(server_id, config):
     logger.info("Server with id " + str(server_id) + " reconfigured")
     config_str = dumps(config)
-    cursor.execute("UPDATE servers SET config = ? WHERE server_id = ?;", (config_str, server_id))
+    exec_query("UPDATE servers SET config = ? WHERE server_id = ?;", (config_str, server_id))
     conn.commit()
 
 
 def del_server(server_id):
     logger.info("Server with id " + str(server_id) + " deleted")
-    cursor.execute("DELETE FROM servers WHERE server_id = ?;", [server_id])
+    exec_query("DELETE FROM servers WHERE server_id = ?;", [server_id])
     conn.commit()
 
 
 def add_if_not_exists(server_id):
-    cursor.execute("SELECT * FROM servers WHERE server_id = ?;", [server_id])
+    exec_query("SELECT * FROM servers WHERE server_id = ?;", [server_id])
     if not cursor.fetchone():
         new_server(server_id)
 
