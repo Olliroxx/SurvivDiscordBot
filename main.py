@@ -1,9 +1,9 @@
-from json import load, dump
-import discord
-from time import time
-import db_manager
 import logging
-from threading import Lock as ThreadingLock
+from json import load, dump, loads, dumps
+from time import time
+from os import environ
+import discord
+import db_manager
 
 # Main handler
 main_logger = logging.getLogger(__name__)
@@ -24,58 +24,75 @@ handler = logging.FileHandler(filename="./data/logs/discord.log", encoding="utf-
 handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 discord_logger.addHandler(handler)
 
-config_file = open("./data/config.json")
-config = load(config_file)
-del config_file
-# Load json config
-
 MARKET_ITEMS_PER_PAGE = 10
 FOOTER_TEXT = "DM the bot and your feedback will be passed on the maintainer"
 
 last_update_time = time()
 update_interval = 60
 server_status = {}
+
+
 # ud: unplanned down
 # pd: planned down
 # d: down
 # u: up
 
-config_lock = ThreadingLock()
+
+class JsonConfig:
+    def __init__(self, file_path):
+        from threading import Lock
+        config_file = open(file_path)
+        self.config_path = file_path
+        self.config = load(config_file)
+        self.config_lock = Lock()
+
+    def __getitem__(self, item):
+        return self.config[item]
+
+    def __setitem__(self, key, value):
+        self.config_lock.acquire()
+        self.config[key] = value
+        file = open(self.config_path, mode="w")
+        dump(self.config, file)
+        file.close()
+        self.config_lock.release()
+
+
+class HerokuConfig:
+    def __init__(self):
+        from threading import Lock
+        self.lock = Lock()
+
+    def __setitem__(self, key, value):
+        self.lock.acquire()
+        from os import environ
+        environ[key] = value
+        self.lock.release()
+
+    def __getitem__(self, item):
+        self.lock.acquire()
+        from os import environ
+        result = environ[item]
+        self.lock.release()
+        return result
+
+
+if "discord_token" in environ:
+    config = HerokuConfig()
+else:
+    config = JsonConfig("./data/config.json")
 
 
 def update_blocked_users(uid):
-    global config, config_file
-    main_logger.debug("Waiting for config lock to update blocked users")
-    config_lock.acquire()
-    main_logger.debug("Blocking user with id "+str(uid))
-
-    config_file = open("./data/config.json")
-    config = load(config_file)
-    del config_file
-    config["blocked"].append(uid)
-    file = open("./data/config.json", "w")
-    dump(config, file, indent=4)
-    file.close()
-
-    main_logger.info("Blocked user with id "+str(uid))
-    config_lock.release()
-    main_logger.debug("Released config lock")
+    blocked = loads(config["blocked"])
+    blocked.append(uid)
+    config["blocked"] = dumps(blocked)
+    main_logger.info("Blocked user with id " + str(uid))
 
 
 def update_stored_cookie(new_cookie):
-    main_logger.debug("Waiting for config lock to update app-sid")
-    config_lock.acquire()
-    main_logger.debug("Updating cookie to "+new_cookie)
-
     config["surviv_app_sid"] = new_cookie
-    file = open("./data/config.json", "w")
-    dump(config, file, indent=4)
-    file.close()
-    # Write app-sid cookie
-
-    main_logger.debug("Updated cookie to "+new_cookie)
-    config_lock.release()
-    main_logger.debug("Released config lock")
+    main_logger.debug("Updated cookie to " + new_cookie)
 
 
 def update_server_status():
@@ -181,7 +198,7 @@ async def get_market_items(message):
             1: "Common"
         }
         embed = discord.Embed(title="Page " + str(page_num) + " of " + str(int(len(items) / MARKET_ITEMS_PER_PAGE)))
-        for item in items[(page_num-1) * MARKET_ITEMS_PER_PAGE:page_num * MARKET_ITEMS_PER_PAGE]:
+        for item in items[(page_num - 1) * MARKET_ITEMS_PER_PAGE:page_num * MARKET_ITEMS_PER_PAGE]:
             item_str = "Item: " + item["item"]
             item_str += "\nType: " + item["type"]
             item_str += "\nPrice: " + str(item["price"])
@@ -190,7 +207,7 @@ async def get_market_items(message):
             item_str += "\nKills: " + str(item["kills"])
             item_str += "\nLevels: " + str(item["levels"])
             item_str += "\nWins: " + str(item["wins"])
-            embed.add_field(name="Item " + str(items.index(item)+1), value=item_str)
+            embed.add_field(name="Item " + str(items.index(item) + 1), value=item_str)
         embed.set_footer(text=FOOTER_TEXT)
         return embed
 
@@ -257,7 +274,7 @@ async def get_market_items(message):
     req = {
         "rarity": rarity,
         "type": item_type,
-        "userId": config["surviv_id"]
+        "userId": int(config["surviv_id"])
     }
     resp = session.post("https://surviv.io/api/user/market/get_market_available_items", json=req)
     main_logger.debug("Got market response " + str(resp) + " " + resp.text)
@@ -318,7 +335,7 @@ async def get_stats(message):
         embed.add_field(name="Kills: ", value=str(resp["kills"]))
         embed.add_field(name="Wins: ", value=str(resp["wins"]))
         embed.add_field(name="KPG: ", value=resp["kpg"])
-        
+
         embed.set_footer(text=FOOTER_TEXT)
         await message.reply(embed=embed)
         return
@@ -336,7 +353,8 @@ async def get_stats(message):
         return
 
     index = arg_to_type[argv[2]]
-    embed = discord.Embed(title=resp["username"]+" " + (argv[2][:-1] if argv[2].endswith("s") else argv[2]) + " game stats")
+    embed = discord.Embed(
+        title=resp["username"] + " " + (argv[2][:-1] if argv[2].endswith("s") else argv[2]) + " game stats")
     embed.add_field(name="Games: ", value=str(resp["modes"][index]["games"]))
     embed.add_field(name="Kills: ", value=str(resp["modes"][index]["kills"]))
     embed.add_field(name="KPG: ", value=str(resp["modes"][index]["kpg"]))
@@ -385,7 +403,8 @@ async def leave(message):
 
 async def change_pre(message):
     settings = db_manager.get_server(message.guild.id)
-    if not (message.author.id == message.guild.owner_id or message.guild.get_role(settings["manager_role_id"]) in message.author.roles):
+    if not (message.author.id == message.guild.owner_id or message.guild.get_role(
+            settings["manager_role_id"]) in message.author.roles):
         await permissions_error_message(message)
         return
     # Input validation
@@ -402,7 +421,8 @@ async def change_pre(message):
 
 async def change_down_channel(message):
     settings = db_manager.get_server(message.guild.id)
-    if not (message.author.id == message.guild.owner_id or message.guild.get_role(settings["manager_role_id"]) in message.author.roles):
+    if not (message.author.id == message.guild.owner_id or message.guild.get_role(
+            settings["manager_role_id"]) in message.author.roles):
         await permissions_error_message(message)
         return
 
@@ -434,16 +454,21 @@ async def help_message(message):
     prefix = settings["prefix"]
 
     embed = discord.Embed(title="Commands")
-    embed.add_field(name=prefix+"stats", value="Get stats of a specific user, the name should be the same as in the stats link. You can also put solo, duos or sqauds at the end for more info")
-    embed.add_field(name=prefix+"setmanagerrole", value="Set the role that can make changes to the bot, like the prefix. Arg must be a valid role ID or 0 to disable. Only the owner can perform this action")
-    embed.add_field(name=prefix+"remove, "+prefix+"leave", value="Kicking/banning should have the same effect as these, only people with kick perms can use this.")
-    embed.add_field(name=prefix+"prefix", value="Change the prefix which the bot responds to")
-    embed.add_field(name=prefix+"server", value="Check the current status of the surviv.io servers")
-    embed.add_field(name=prefix+"market", value="Get market items, arguments should be in the format [rarity] [type] [page]")
-    embed.add_field(name=prefix+"serverchannel, "+prefix+"downchannel", value="The channel to send surviv server downtime messages to. Set to 0 to disable")
-    embed.add_field(name=prefix+"servercount", value="Say the amount of servers this bot is in")
-    embed.add_field(name=prefix+"help", value="This message")
-    embed.add_field(name=prefix+"inv, "+prefix+"invite", value="The invite link for this bot")
+    embed.add_field(name=prefix + "stats",
+                    value="Get stats of a specific user, the name should be the same as in the stats link. You can also put solo, duos or sqauds at the end for more info")
+    embed.add_field(name=prefix + "setmanagerrole",
+                    value="Set the role that can make changes to the bot, like the prefix. Arg must be a valid role ID or 0 to disable. Only the owner can perform this action")
+    embed.add_field(name=prefix + "remove, " + prefix + "leave",
+                    value="Kicking/banning should have the same effect as these, only people with kick perms can use this.")
+    embed.add_field(name=prefix + "prefix", value="Change the prefix which the bot responds to")
+    embed.add_field(name=prefix + "server", value="Check the current status of the surviv.io servers")
+    embed.add_field(name=prefix + "market",
+                    value="Get market items, arguments should be in the format [rarity] [type] [page]")
+    embed.add_field(name=prefix + "serverchannel, " + prefix + "downchannel",
+                    value="The channel to send surviv server downtime messages to. Set to 0 to disable")
+    embed.add_field(name=prefix + "servercount", value="Say the amount of servers this bot is in")
+    embed.add_field(name=prefix + "help", value="This message")
+    embed.add_field(name=prefix + "inv, " + prefix + "invite", value="The invite link for this bot")
     embed.set_footer(text=FOOTER_TEXT)
 
     await message.reply(embed=embed)
@@ -491,7 +516,7 @@ async def on_message(message: discord.Message):
     await check_update_server_status()
     if message.author.id in config["blocked"] or message.author.bot:
         return
-    if isinstance(message.channel, discord.DMChannel) and message.author.id == config["discord_feedback_user_id"]:
+    if isinstance(message.channel, discord.DMChannel) and message.author.id == int(config["discord_feedback_user_id"]):
         if message.content == "shutdown":
             await bot.close()
             quit()
@@ -512,8 +537,8 @@ async def on_message(message: discord.Message):
         return
         # Block command, for feedback user only
 
-    if isinstance(message.channel, discord.DMChannel):
-        feedback_user = await bot.fetch_user(config["discord_feedback_user_id"])
+    if isinstance(message.channel, discord.DMChannel) and int(config["discord_feedback_user_id"]):
+        feedback_user = await bot.fetch_user(int(config["discord_feedback_user_id"]))
         feedback_channel = await feedback_user.create_dm()
         await feedback_channel.send("Message from " + str(message.author) + ": " + message.content)
         return

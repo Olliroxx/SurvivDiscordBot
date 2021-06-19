@@ -12,10 +12,10 @@
  * Make a directory inside this directory called data
  * Inside data, put `config.json`, which should contain the values:
     * `discord_token`: the token you copied in the first step
-    * `discord_feedback_user_id`: the user id of the discord account that bot dms will be forwarded to
+    * `discord_feedback_user_id`: the user id of the discord account that bot dms will be forwarded to, set to 0 to disable
     * `discord_join_link`: the text message that will be displayed when someone uses the invite command
-    * `market_enable`: `false` if you didn't set up a new surviv account, if you did then set to `true` and:
-        * `surviv_id`: a `string` containing the surviv account id
+    * `market_enabled`: `false` if you didn't set up a new surviv account, if you did then set to `true` and:
+        * `surviv_id`: the surviv account id
         * `surviv_app_sid`: a string containing `app-sid` (not app-sid=xyz, or xyz; other-stuff, just xyz). This will update after market requests
  * Run main.py to start the bot
 

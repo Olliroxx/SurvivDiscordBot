@@ -1,0 +1,36 @@
+{
+  "name": "Surviv.io market discord bot",
+  "description": "A discord bot that can get surviv market data and stats",
+  "image": "heroku/python",
+  "repository": "https://github.com/Olliroxx/SurvivDiscordBot",
+  "keywords": ["python", "surviv", "surviv.io", "discord"],
+  "env": {
+    "discord_token": {
+      "description": "Discord bot token"
+    },
+    "discord_feedback_user_id": {
+      "description": "The user ID of the discord account that bot DMs will be forwarded to, set to 0 to disable",
+      "value": "0"
+    },
+    "discord_join_link": {
+      "description": "The text message that will be displayed when someone uses the invite command",
+      "value": "The hoster of this bot was too lazy to set this command up"
+    },
+    "market_enabled": {
+      "description": "If the market command is usable",
+      "value": ""
+    },
+    "surviv_id": {
+      "description": "The surviv account ID",
+      "required": false
+    },
+    "surviv_app_sid": {
+      "description": "The app-sid cookie of the surviv account",
+      "required": false
+    },
+    "blocked": {
+      "description": "A JSON encoded list of user IDs to block",
+      "value": "[]"
+    }
+  }
+}
