@@ -5,24 +5,35 @@ from os import environ
 import discord
 import db_manager
 
-# Main handler
 main_logger = logging.getLogger(__name__)
-dbg_handler = logging.FileHandler(filename="./data/logs/main_dbg.log", encoding="utf-8", mode="a")
-main_handler = logging.FileHandler(filename="./data/logs/main.log", encoding="utf-8", mode="a")
-dbg_handler.setLevel(logging.DEBUG)
-main_handler.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-dbg_handler.setFormatter(formatter)
-main_handler.setFormatter(formatter)
-main_logger.addHandler(dbg_handler)
-main_logger.addHandler(main_handler)
-
-# Discord py handler
 discord_logger = logging.getLogger("discord")
 discord_logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename="./data/logs/discord.log", encoding="utf-8", mode="a")
-handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-discord_logger.addHandler(handler)
+
+if "discord_token" in environ:
+    main_handler = logging.StreamHandler()
+    main_handler.setLevel(logging.DEBUG)
+
+    # Discord py handler
+    formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+    main_handler.setFormatter(formatter)
+    main_logger.addHandler(main_handler)
+    discord_logger.addHandler(main_handler)
+
+else:
+    dbg_handler = logging.FileHandler(filename="./data/logs/main_dbg.log", encoding="utf-8", mode="a")
+    main_handler = logging.FileHandler(filename="./data/logs/main.log", encoding="utf-8", mode="a")
+    dbg_handler.setLevel(logging.DEBUG)
+    main_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    dbg_handler.setFormatter(formatter)
+    main_handler.setFormatter(formatter)
+    main_logger.addHandler(dbg_handler)
+    main_logger.addHandler(main_handler)
+
+    # Discord py handler
+    handler = logging.FileHandler(filename="./data/logs/discord.log", encoding="utf-8", mode="a")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    discord_logger.addHandler(handler)
 
 MARKET_ITEMS_PER_PAGE = 10
 FOOTER_TEXT = "DM the bot and your feedback will be passed on the maintainer"

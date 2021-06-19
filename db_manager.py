@@ -22,8 +22,10 @@ else:
     conn = connect("./data/servers.sql")
     cursor = conn.cursor()
 
-
-logging.basicConfig(filename="./data/logs/db.log", filemode="w", format="%(asctime)s - %(message)s", level=logging.INFO)
+if "discord_token" in environ:
+    logging.basicConfig(format="%(name)s - %(message)s", level=logging.INFO)
+else:
+    logging.basicConfig(filename="./data/logs/db.log", filemode="w", format="%(asctime)s - %(message)s", level=logging.INFO)
 
 
 def setup():
