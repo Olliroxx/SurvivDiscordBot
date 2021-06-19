@@ -25,7 +25,7 @@ else:
     cursor = conn.cursor()
 
 if "discord_token" in environ:
-    logging.basicConfig(format="%(name)s - %(message)s", level=logging.INFO)
+    logging.basicConfig(format="db_manager - %(message)s", level=logging.INFO)
 else:
     logging.basicConfig(filename="./data/logs/db.log", filemode="w", format="%(asctime)s - %(message)s", level=logging.INFO)
 
