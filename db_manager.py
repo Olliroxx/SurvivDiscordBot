@@ -35,13 +35,13 @@ def setup():
         cursor.execute("""
 CREATE TABLE IF NOT EXISTS servers (
     server_id INTEGER PRIMARY KEY,
-    config
+    config TEXT
 );""")
     else:
         cursor.execute("""
 CREATE TABLE IF NOT EXISTS servers(
     server_id int PRIMARY KEY,
-    config TEXT
+    config str
 );""")
     conn.commit()
     logging.info("Set up DB")
