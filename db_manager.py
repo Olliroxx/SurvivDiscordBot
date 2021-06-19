@@ -29,8 +29,7 @@ else:
 
 
 def setup():
-    cursor.execute("""
-CREATE TABLE IF NOT EXISTS servers(
+    cursor.execute("""CREATE TABLE IF NOT EXISTS servers(
     server_id int PRIMARY KEY,
     config str
 );
