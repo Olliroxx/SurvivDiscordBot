@@ -118,7 +118,7 @@ def update_server_status():
     from requests import get, exceptions
     try:
         resp = get("https://surviv.io", timeout=10)
-        main_logger.debug("Got frontend response " + str(resp) + " " + resp.text)
+        main_logger.debug("Got frontend response " + str(resp))
     except exceptions.ConnectionError:
         server_status["Main"] = "ud"
         main_logger.info("Surviv frontend down")
@@ -137,7 +137,7 @@ def update_server_status():
 
     try:
         get("https://surviv.io/api/site_info?language=en", timeout=10)
-        main_logger.debug("Got site info response " + str(resp) + " " + resp.text)
+        main_logger.debug("Got site info response " + str(resp))
     except exceptions.ConnectionError:
         server_status["API"] = "d"
         main_logger.info("Surviv api down")
@@ -531,7 +531,7 @@ async def on_ready():
 @bot.event
 async def on_message(message: discord.Message):
     await check_update_server_status()
-    if message.author.id in config["blocked"] or message.author.bot:
+    if message.author.id in loads(config["blocked"]) or message.author.bot:
         return
     if isinstance(message.channel, discord.DMChannel) and message.author.id == int(config["discord_feedback_user_id"]):
         if message.content == "shutdown":
