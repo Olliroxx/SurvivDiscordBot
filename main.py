@@ -414,7 +414,6 @@ async def leave(message):
         await permissions_error_message(message)
         return
     await message.reply("Leaving server")
-    db_manager.del_server(message.guild.id)
     await message.guild.leave()
 
 

@@ -41,16 +41,15 @@ logger.info("Starting")
 
 def exec_query(query, values):
     if is_postgres:
-        cursor.execute(query.replace("?", "%s"), values)
-    else:
-        cursor.execute(query, values)
+        query = query.replace("?", "%s")
+    cursor.execute(query, values)
 
 
 def setup():
     if is_postgres:
         cursor.execute("""
 CREATE TABLE IF NOT EXISTS servers (
-    server_id INTEGER PRIMARY KEY,
+    server_id BIGINT PRIMARY KEY,
     config TEXT
 );""")
     else:
