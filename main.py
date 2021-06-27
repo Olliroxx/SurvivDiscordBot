@@ -49,7 +49,6 @@ FOOTER_TEXT = "DM the bot and your feedback will be passed on the maintainer"
 last_update_time = time()
 update_interval = 60
 server_status = {}
-# ud: unplanned down
 # pd: planned down
 # d: down
 # u: up
@@ -116,24 +115,37 @@ def update_server_status():
     global last_update_time
     last_update_time = time()
     from requests import get, exceptions
-    try:
-        resp = get("https://surviv.io", timeout=10)
-        main_logger.debug("Got frontend response " + str(resp))
-    except exceptions.ConnectionError:
-        server_status["Main"] = "ud"
-        main_logger.info("Surviv frontend down")
-        return
 
-    if resp.status_code == 503:
-        server_status["Main"] = "pd"
-        main_logger.info("Surviv frontend down")
-        return
-    elif resp.status_code == 502:
-        server_status["Main"] = "ud"
-        main_logger.info("Surviv frontend down")
-    else:
-        server_status["main"] = "u"
-        main_logger.info("Surviv frontend up")
+    is502 = True
+    attempts = 0
+    while is502:
+        if attempts >= 10:
+            server_status["Main"] = "ud"
+            return
+
+        try:
+            resp = get("https://surviv.io", timeout=10)
+            main_logger.debug("Got frontend response " + str(resp))
+        except exceptions.ConnectionError:
+            server_status["Main"] = "ud"
+            main_logger.info("Surviv frontend down")
+            attempts += 1
+            resp = None
+
+        if resp is None:
+            pass
+        elif resp.status_code == 503:
+            server_status["Main"] = "pd"
+            main_logger.info("Surviv frontend down")
+            is502 = False
+        elif resp.status_code == 502:
+            server_status["Main"] = "ud"
+            main_logger.info("Surviv frontend down")
+            attempts += 1
+        else:
+            server_status["main"] = "u"
+            main_logger.info("Surviv frontend up")
+            is502 = False
 
     try:
         get("https://surviv.io/api/site_info?language=en", timeout=10)
