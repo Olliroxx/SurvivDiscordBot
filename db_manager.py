@@ -2,8 +2,6 @@ from json import loads, dumps
 import logging
 from os import environ
 
-import psycopg2
-
 conn = None
 cursor = None
 is_postgres = False
