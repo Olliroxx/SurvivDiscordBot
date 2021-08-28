@@ -1,5 +1,6 @@
 # SurvivDiscordBot
 
+## Warning: This bot may be broken soon, due to discordpy being abandoned
 
 A simple discord bot with a few features:
 * Downtime messages+on demand querying
